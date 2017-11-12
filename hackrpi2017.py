@@ -1,10 +1,14 @@
+#!/usr/bin/python3
+# hackrpi2017.py by Jacob Speicher and Greg Cowan
+
+import os
 import pygame
 import random
 
 
 code_lines = [
     'for slice in pizza:',
-    'print("Self Destructing ...")',
+    'print("Self Destructing...")',
     'i++',
     'class Sound(object):',
     'width = 800',
@@ -64,7 +68,7 @@ class HandSprite(object):
         self.pos = pos
         self.radius = radius
         self.animation_time = 0
-        self.animation_length = 10
+        self.animation_length = 20
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, self.pos, self.radius)
@@ -82,6 +86,14 @@ class HandSprite(object):
             self.animation_time = 1
 
 
+white = (255,255,255)
+yellow = (255,255,0)
+black = (0,0,0)
+red = (255,0,0)
+orange = (253, 112, 20)
+gray = (34, 40, 49)
+
+
 def main():
     pygame.init()
     width = 1200
@@ -89,9 +101,11 @@ def main():
     win = pygame.display.set_mode((width,height))
     pygame.display.set_caption('Hackathonator')
 
+    user = os.environ['USER']
+
     sprites = dict()
-    sprites['l_hand'] = HandSprite((255,255,0), (width//2 -140, height), 20)
-    sprites['r_hand'] = HandSprite((255,255,0), (width//2 +140, height), 20)
+    sprites['l_hand'] = HandSprite(yellow, (width//2 -140, height), 20)
+    sprites['r_hand'] = HandSprite(yellow, (width//2 +140, height), 20)
 
     my_clock = pygame.time.Clock()
 
@@ -150,34 +164,35 @@ def main():
 
             # Rendering
             win.fill((0, 0, 0))
-            screen_bezel = pygame.draw.rect(win, (255, 255, 255), (30, 10, width - 60, height - 70))
-            screen = pygame.draw.rect(win, (34, 40, 49), (50, 30, width - 100, height - 110))
-            camera = pygame.draw.circle(win, (0, 0, 0), (width//2, 20), 5)
-            head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
+            screen_bezel = pygame.draw.rect(win, white, (30, 10, width - 60, height - 70))
+            screen = pygame.draw.rect(win, gray, (50, 30, width - 100, height - 110))
+            camera = pygame.draw.circle(win, black, (width//2, 20), 5)
+            head = pygame.draw.circle(win, yellow, (width//2, height), 100)
             
             if code_index != len(code_line):
-                cursor = font.render(code_line[code_index], 1, (0, 0, 0), (255, 255, 255))
+                cursor = font.render(code_line[code_index], 1, black, white)
 
-            code = font.render(code_line, 1, (255, 255, 255))
-            wrong_text = font.render(wrong_string, 1, (255, 255, 255), (255, 0, 0))
-            text = font.render(string, 1, (253, 112, 20), (34, 40, 49))
-            l_num = font.render(str(len(finished_lines) + 1) + '.', 1, (255, 255, 255))
+            code = font.render(code_line, 1, white)
+            wrong_text = font.render(wrong_string, 1, white, red)
+            text = font.render(string, 1, orange, gray)
+            l_num = font.render(str(len(finished_lines) + 1) + '.', 1, white)
 
             line_h = line_height
             for line in finished_lines[-38:]:
-                f_line = font.render(line[0], 1, (253, 112, 20))
+                f_line = font.render(line[0], 1, orange)
                 win.blit(f_line, (55 + font.size(str(line[1]) + '. ')[0], line_h)) 
-                l_number = font.render(str(line[1]) + '. ', 1, (255, 255, 255))
+                l_number = font.render(str(line[1]) + '. ', 1, white)
                 win.blit(l_number, (55, line_h))
                 line_h = min(line_h+15, 625)
 
-            win.blit(code, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_h))
-            win.blit(cursor, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0] + (font.size(string)[0]), line_h))
-            win.blit(wrong_text, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_h))
-            win.blit(text, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_h))
+            start_line_x = font.size(str(len(finished_lines) + 1) + '. ')[0]
+            win.blit(code, (55 + start_line_x, line_h))
+            win.blit(cursor, (55 + start_line_x  + (font.size(string)[0]), line_h))
+            win.blit(wrong_text, (55 + start_line_x, line_h))
+            win.blit(text, (55 + start_line_x, line_h))
             win.blit(l_num, (55, line_h))
 
-            head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
+            head = pygame.draw.circle(win, yellow, (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
                 sprite.draw(win)
 
