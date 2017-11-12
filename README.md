@@ -1,4 +1,4 @@
-# SpotifyVisualizer
-Web app to play Spotify music with a visualizer
+# Hackathonator
+now it's a game
 
 Made during HackRPI 2017 by Jacob Speicher and Greg Cowan
