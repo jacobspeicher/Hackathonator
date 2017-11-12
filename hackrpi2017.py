@@ -180,6 +180,7 @@ def main():
     clock = pygame.time.Clock()
     ticks = 0
     other_lost = False
+    other_score = 0
 
     try:
         while time_limit > 0:
@@ -256,6 +257,7 @@ def main():
                                 if ',' in msg:
                                     sender, s_line = msg.split(',')
                                     opponents[sender] = s_line
+                                    other_score = int(s_line)
                                 else:
                                     other_lost = True
                                     game_over_line = msg
@@ -274,6 +276,7 @@ def main():
                         if ',' in msg:
                             sender, s_line = msg.split(',')
                             opponents[sender] = s_line
+                            other_score = int(s_line)
                         else:
                             other_lost = True
                             game_over_line = msg
@@ -302,6 +305,10 @@ def main():
             time = font.render("Time Left: " + str(time_limit), 1, white)
             if other_lost:
                 other_lost_line = font.render(game_over_line, 1, white, black)
+                if other_score > finished_lines[-1][1]:
+                    end_msg = font.render("You lost", 1, white, black)
+                else:
+                    end_msg = font.render("You won!", 1, white, black)
 
             line_h = line_height
             for line in finished_lines[-38:]:
