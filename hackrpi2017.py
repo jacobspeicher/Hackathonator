@@ -87,6 +87,7 @@ def main():
     width = 1200
     height = 720
     win = pygame.display.set_mode((width,height))
+    pygame.display.set_caption('Hackathonator')
 
     sprites = dict()
     sprites['l_hand'] = HandSprite((255,255,0), (width//2 -140, height), 20)
@@ -96,7 +97,7 @@ def main():
 
     string = ''
     wrong_string = ''
-    font = pygame.font.Font('RobotoMono-Medium.ttf', 12)
+    font = pygame.font.Font('RobotoMono-Medium.ttf', 14)
     code_line = 'I may be slow but watch me go'
     code_index = 0
     line_height = 40
@@ -105,6 +106,7 @@ def main():
 
     try:
         while True:
+            # Event handling and game logic
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
@@ -116,17 +118,16 @@ def main():
                             sprites['l_hand'].move()
                         else:
                             sprites['r_hand'].move()
-                        if event.unicode == code_line[code_index] and len(string) == len(wrong_string):
+                        if (event.unicode == code_line[code_index] and len(string) == len(wrong_string)) or event.key == pygame.K_LALT:
                             string += event.unicode
                             wrong_string += event.unicode
                             code_index += 1
-                            if code_index == len(code_line):
-                                finished_lines.append((string, line_height))
+                            if code_index == len(code_line) or event.key == pygame.K_LALT:
+                                finished_lines.append((code_line, len(finished_lines)+1))
                                 code_line = code_lines[random.randint(0,len(code_lines)-1)]
                                 string = ''
                                 wrong_string = ''
                                 code_index = 0
-                                line_height += 15
                         else:
                             if event.key not in mods and len(string) == len(wrong_string):
                                 if code_line[code_index] == ' ':
@@ -145,6 +146,7 @@ def main():
             for sprite_name, sprite in sprites.items():
                 sprite.update()
 
+            # Rendering
             win.fill((0, 0, 0))
             screen_bezel = pygame.draw.rect(win, (255, 255, 255), (30, 10, width - 60, height - 70))
             screen = pygame.draw.rect(win, (34, 40, 49), (50, 30, width - 100, height - 110))
@@ -157,25 +159,25 @@ def main():
             text = font.render(string, 1, (253, 112, 20), (34, 40, 49))
             l_num = font.render(str(len(finished_lines) + 1) + '.', 1, (255, 255, 255))
 
-            line_numbers = 1
-            for line in finished_lines:
+            line_h = line_height
+            for line in finished_lines[-38:]:
                 f_line = font.render(line[0], 1, (253, 112, 20))
-                win.blit(f_line, (75, line[1])) 
-                l_number = font.render(str(line_numbers) + '.', 1, (255, 255, 255))
-                win.blit(l_number, (55, line[1]))
-                line_numbers += 1
+                win.blit(f_line, (75, line_h))
+                l_number = font.render(str(line[1]) + '.', 1, (255, 255, 255))
+                win.blit(l_number, (55, line_h))
+                line_h = min(line_h+15,625)
 
-            win.blit(code, (75, line_height))
-            win.blit(cursor, (75 + (font.size(string)[0]), line_height))
-            win.blit(wrong_text, (75, line_height))
-            win.blit(text, (75, line_height))
-            win.blit(l_num, (55, line_height))
+            win.blit(code, (75, line_h))
+            win.blit(cursor, (75 + (font.size(string)[0]), line_h))
+            win.blit(wrong_text, (75, line_h))
+            win.blit(text, (75, line_h))
+            win.blit(l_num, (55, line_h))
             head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
                 sprite.draw(win)
 
             pygame.display.flip()
-            my_clock.tick(60)
+            my_clock.tick(240)
 
     except pygame.error:
         pass
