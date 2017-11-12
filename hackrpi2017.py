@@ -168,7 +168,7 @@ def main():
                                     string = ''
                                     wrong_string = ''
                                     code_index = 0
-                                    reply_str = user + ',' + str(len(finished_lines)+1)
+                                    reply_str = user + ',' + str(len(finished_lines))
                                     if is_server:
                                         for conn in connections:
                                             conn.sendall(bytearray(reply_str, 'utf-8'))
@@ -198,20 +198,23 @@ def main():
                     conn, addr = sock.accept()
                     conn.settimeout(TIMEOUT)
                     connections.append(conn)
-                    new_conns = []
-                    for conn in connections:
-                        msg = conn.recv(256)
-                        if msg is not None:
-                            msg = str(msg).strip('b').strip('\'')
-                            sender, s_line = msg.split(',')
-                            opponents[sender] = s_line
-                            print(msg)
-                            new_conns.append(conn)
-                        else:
-                            conn.close()
-                    connections = new_conns
                 except socket.timeout:
-                    pass
+                    try:
+                        new_conns = []
+                        for conn in connections:
+                            print(conn)
+                            msg = conn.recv(256)
+                            if msg is not None or msg != b'':
+                                msg = str(msg).strip('b').strip('\'')
+                                sender, s_line = msg.split(',')
+                                opponents[sender] = s_line
+                                print(msg)
+                                new_conns.append(conn)
+                            else:
+                                conn.close()
+                        connections = new_conns
+                    except socket.timeout:
+                        pass
             else:
                 try:
                     msg = sock.recv(256)
@@ -272,6 +275,7 @@ def main():
         pass
 
     pygame.quit()
+    sock.close()
 
 
 if __name__=='__main__':
