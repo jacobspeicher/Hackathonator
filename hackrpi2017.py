@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 # hackrpi2017.py by Jacob Speicher and Greg Cowan
 
+import argparse
+import operator
 import os
 import pygame
 import random
+import socket
 
 
 code_lines = [
@@ -95,6 +98,10 @@ gray = (34, 40, 49)
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Hackathonator. Type faster than your friends!')
+    parser.add_argument('-n', dest='hostname', type=str, help='Hostname of opponent who is running as a server.')
+    parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
+    args = parser.parse_args()
     pygame.init()
     width = 1200
     height = 720
@@ -117,6 +124,23 @@ def main():
     line_height = 40
     finished_lines = []
     mods = [304, 303, 13, 301]
+
+    connections = []
+    opponents = dict()
+    TIMEOUT = 0.001
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(TIMEOUT)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    is_server = None
+    if args.hostname is None:
+        is_server = True
+        HOST = 'localhost'
+        PORT = 9876
+        sock.bind((HOST, PORT))
+        sock.listen(8)
+    else:
+        is_sever = False
+        sock.connect((args.hostname, args.port))
 
     try:
         while True:
@@ -144,6 +168,12 @@ def main():
                                     string = ''
                                     wrong_string = ''
                                     code_index = 0
+                                    reply_str = user + ',' + str(len(finished_lines)+1)
+                                    if is_server:
+                                        for conn in connections:
+                                            conn.sendall(bytearray(reply_str, 'utf-8'))
+                                    else:
+                                        sock.sendall(bytearray(reply_str, 'utf-8'))
                             else:
                                 if event.key not in mods and len(string) == len(wrong_string):
                                     if code_line[code_index] == ' ':
@@ -161,6 +191,39 @@ def main():
 
             for sprite_name, sprite in sprites.items():
                 sprite.update()
+
+            # Networking
+            if is_server:
+                try:
+                    conn, addr = sock.accept()
+                    conn.settimeout(TIMEOUT)
+                    connections.append(conn)
+                    new_conns = []
+                    for conn in connections:
+                        msg = conn.recv(256)
+                        if msg is not None:
+                            msg = str(msg).strip('b').strip('\'')
+                            sender, s_line = msg.split(',')
+                            opponents[sender] = s_line
+                            print(msg)
+                            new_conns.append(conn)
+                        else:
+                            conn.close()
+                    connections = new_conns
+                except socket.timeout:
+                    pass
+            else:
+                try:
+                    msg = sock.recv(256)
+                    if msg is not None:
+                        msg = str(msg).strip('b').strip('\'')
+                        sender, s_line = msg.split(',')
+                        opponents[sender] = s_line
+                        print(msg)
+                    else:
+                        sock.close()
+                except socket.timeout:
+                    pass
 
             # Rendering
             win.fill((0, 0, 0))
@@ -195,6 +258,12 @@ def main():
             head = pygame.draw.circle(win, yellow, (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
                 sprite.draw(win)
+
+            sorted_opps = sorted(opponents.items(), key=operator.itemgetter(1), reverse=True)
+            if len(sorted_opps) != 0:
+                opp = sorted_opps[0]
+                opponent = font.render(opp[0] + ": " + opp[1], 1, white)
+                win.blit(opponent, (55, height-20))
 
             pygame.display.flip()
             my_clock.tick(240)
