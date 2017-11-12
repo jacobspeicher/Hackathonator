@@ -60,6 +60,13 @@ code_lines = [
     'if self.algo == Algo.SRT and self.busy and self.running_process is not None and process.rem_time',
     'else:',
     'def parse_input(filename):',
+    '*carry_out = (d0 & d1) | (carry_in & (d0 ^ d1));',
+    'ble $t2, $t1, inner_body',
+    'if packed < 0: raise ValueError, "must be a positive integer"',
+    'return Grid(width, height, bitRepresentation= bitRep[2:])',
+    'self._agentCrash(i, quiet=True)',
+    'a = (int **) malloc(sizeof(int *)* n);',
+    'free((void *) a[i]);',
 ]
 
 
