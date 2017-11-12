@@ -144,6 +144,7 @@ def main():
                 if c.getpeername()[0] == address:
                     found = True
             if not found:
+                print("ADDING CONNECTION ZCONF")
                 connections.append(n_sock)
 
     desc = {'path': '/stuff/'}
@@ -242,9 +243,12 @@ def main():
                 conn.settimeout(TIMEOUT)
                 found = False
                 for c in connections:
+                    print(addr)
+                    print(c.getpeername()[0])
                     if c.getpeername()[0] == addr:
                         found = True
                 if not found:
+                    print("ADDING CONNECTION SERVER")
                     connections.append(conn)
             except socket.timeout:
                 try:
@@ -263,7 +267,9 @@ def main():
                             print(msg)
                             new_conns.append(conn)
                         else:
+                            print('Closing')
                             conn.close()
+                    connections = new_conns
                 except socket.timeout:
                     pass
 
