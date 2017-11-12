@@ -142,8 +142,8 @@ def main():
                 return
             n_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             n_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            n_sock.settimeout(TIMEOUT)
             n_sock.connect((address, port))
+            n_sock.settimeout(TIMEOUT)
             found = False
             for c in connections:
                 print(c.getpeername())
@@ -331,14 +331,8 @@ def main():
                 break
 
         if not other_lost:
-            if is_server:
-                for conn in connections:
-                    conn.sendall(bytearray(user + " ran out of time", 'utf-8'))
-            else:
-                try:
-                    sock.sendall(bytearray(user + " ran out of time", 'utf-8'))
-                except socket.error:
-                    pass
+            for conn in connections:
+                conn.sendall(bytearray(user + " ran out of time", 'utf-8'))
 
         while True and not other_lost:
             events = pygame.event.get()
