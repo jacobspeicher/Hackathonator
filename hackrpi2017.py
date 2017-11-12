@@ -1,16 +1,26 @@
 
-import asyncio
-from graphics import *
-
+import pygame
 
 def main():
-    win = GraphWin('Hackathonator', 800, 600)
-    win.setBackground(color_rgb(34, 40, 49))
+    pygame.init()
+    width = 800
+    height = 600
+    win = pygame.display.set_mode((width,height))
+    win.fill((34, 40, 49))
 
-    head = Circle(Point(win.getWidth()/2, win.getHeight()), 100)
-    head.setFill('yellow')
-    head.draw(win)
+    head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
 
+    while True:
+        ev = pygame.event.poll()
+        if ev.type == pygame.QUIT:
+            break
+
+        # Now the surface is ready, tell pygame to display it!
+        pygame.display.flip()
+
+    pygame.quit()     # Once we leave the loop, close the window.
+
+'''
     left_hand = Circle(Point(win.getWidth()/2 - 140, win.getHeight()), 20)
     left_hand.setFill('yellow')
     left_hand.draw(win)
@@ -36,8 +46,7 @@ def main():
     except GraphicsError:
         pass
 
-    win.getMouse()
-    win.close()
+'''
 
 
 
