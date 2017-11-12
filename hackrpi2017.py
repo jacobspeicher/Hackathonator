@@ -102,6 +102,7 @@ def main():
     parser.add_argument('-n', dest='hostname', type=str, help='Hostname of opponent who is running as a server.')
     parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
     args = parser.parse_args()
+
     pygame.init()
     width = 1200
     height = 720
@@ -129,18 +130,18 @@ def main():
     opponents = dict()
     TIMEOUT = 0.001
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(TIMEOUT)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     is_server = None
     if args.hostname is None:
         is_server = True
-        HOST = 'localhost'
+        HOST = ''
         PORT = 9876
         sock.bind((HOST, PORT))
         sock.listen(8)
     else:
         is_sever = False
         sock.connect((args.hostname, args.port))
+    sock.settimeout(TIMEOUT)
 
     try:
         while True:
@@ -173,7 +174,10 @@ def main():
                                         for conn in connections:
                                             conn.sendall(bytearray(reply_str, 'utf-8'))
                                     else:
-                                        sock.sendall(bytearray(reply_str, 'utf-8'))
+                                        try:
+                                            sock.sendall(bytearray(reply_str, 'utf-8'))
+                                        except socket.error:
+                                            pass
                             else:
                                 if event.key not in mods and len(string) == len(wrong_string):
                                     if code_line[code_index] == ' ':
@@ -198,13 +202,13 @@ def main():
                     conn, addr = sock.accept()
                     conn.settimeout(TIMEOUT)
                     connections.append(conn)
+                    print(conn)
                 except socket.timeout:
                     try:
                         new_conns = []
                         for conn in connections:
-                            print(conn)
                             msg = conn.recv(256)
-                            if msg is not None or msg != b'':
+                            if msg is not None and msg != b'':
                                 msg = str(msg).strip('b').strip('\'')
                                 sender, s_line = msg.split(',')
                                 opponents[sender] = s_line
@@ -218,7 +222,7 @@ def main():
             else:
                 try:
                     msg = sock.recv(256)
-                    if msg is not None:
+                    if msg is not None and msg != b'':
                         msg = str(msg).strip('b').strip('\'')
                         sender, s_line = msg.split(',')
                         opponents[sender] = s_line
@@ -226,6 +230,8 @@ def main():
                     else:
                         sock.close()
                 except socket.timeout:
+                    pass
+                except socket.error:
                     pass
 
             # Rendering
