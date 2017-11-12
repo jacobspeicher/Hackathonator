@@ -141,7 +141,6 @@ def main():
             n_sock.settimeout(TIMEOUT)
             found = False
             for c in connections:
-                print(c.getpeername())
                 if c.getpeername()[0] == address:
                     found = True
             if not found:
@@ -216,6 +215,7 @@ def main():
                                     wrong_string = ''
                                     code_index = 0
                                     reply_str = user + ',' + str(len(finished_lines))
+                                    print(connections)
                                     for conn in connections:
                                         conn.sendall(bytearray(reply_str, 'utf-8'))
                             else:
@@ -240,8 +240,12 @@ def main():
             try:
                 conn, addr = sock.accept()
                 conn.settimeout(TIMEOUT)
-                connections.append(conn)
-                print(conn)
+                found = False
+                for c in connections:
+                    if c.getpeername()[0] == addr:
+                        found = True
+                if not found:
+                    connections.append(conn)
             except socket.timeout:
                 try:
                     new_conns = []
