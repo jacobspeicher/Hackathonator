@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # hackrpi2017.py by Jacob Speicher and Greg Cowan
+# need to pip install ipgetter and zeroconf
 
-import argparse
 import operator
 import os
 import pygame
@@ -108,11 +108,6 @@ gray = (34, 40, 49)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Hackathonator. Type faster than your friends!')
-    parser.add_argument('-n', dest='hostname', type=str, help='Hostname of opponent who is running as a server.')
-    parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
-    args = parser.parse_args()
-
     IP = ipgetter.myip()
     print(IP)
     user = os.environ['USER']
@@ -142,8 +137,8 @@ def main():
                 return
             n_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             n_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            n_sock.settimeout(TIMEOUT)
             n_sock.connect((address, port))
+            n_sock.settimeout(TIMEOUT)
             found = False
             for c in connections:
                 print(c.getpeername())
