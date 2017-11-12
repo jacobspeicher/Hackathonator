@@ -121,13 +121,13 @@ def main():
     parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
     args = parser.parse_args()
 
-    desc = {'path': '/~paulsm/'}
+    desc = {'path': '/stuff/'}
     zeroconf = Zeroconf()
     listener = ZListener()
     browser = ServiceBrowser(zeroconf, "_hackathonator._tcp.local.", listener)
-    info = ServiceInfo("_http._tcp.local.",
-                   "Paul's Test Web Site._http._tcp.local.",
-                   socket.inet_aton("127.0.0.1"), 80, 0, 0,
+    info = ServiceInfo("_hackathonator._tcp.local.",
+                   user+"._hackathonator._tcp.local.",
+                   socket.inet_aton("127.0.0.1"), 9876, 0, 0,
                    desc, "ash-2.local.")
     zeroconf.register_service(info)
 
