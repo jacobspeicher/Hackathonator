@@ -98,17 +98,6 @@ class HandSprite(object):
             self.pos = (self.init_pos[0], self.init_pos[1] - 20)
             self.animation_time = 1
 
-class ZListener(object):
-
-    def remove_service(self, zeroconf, tpe, name):
-        print("Service %s removed" % (name,))
-
-    def add_service(self, zeroconf, tpe, name):
-        info = zeroconf.get_service_info(tpe, name)
-        print("Service %s added, service info: %s" % (name, info))
-        address = socket.inet_ntoa(info.address)
-        print(address)
-
 
 white = (255,255,255)
 yellow = (255,255,0)
@@ -124,11 +113,45 @@ def main():
     parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
     args = parser.parse_args()
 
-    user = os.environ['USER']
-
     IP = ipgetter.myip()
     print(IP)
-    print(type(IP))
+    user = os.environ['USER']
+
+    connections = []
+    opponents = dict()
+    TIMEOUT = 0.001
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    HOST = ''
+    PORT = 9876
+    sock.bind((HOST, PORT))
+    sock.listen(8)
+    sock.settimeout(TIMEOUT)
+
+    class ZListener(object):
+        def remove_service(self, zeroconf, tpe, name):
+            print("Service %s removed" % (name,))
+        def add_service(self, zeroconf, tpe, name):
+            info = zeroconf.get_service_info(tpe, name)
+            print("Service %s added, service info: %s" % (name, info))
+            address = socket.inet_ntoa(info.address)
+            port = info.port
+            print(address)
+            print(port)
+            if address == IP:
+                return
+            n_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            n_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            n_sock.settimeout(TIMEOUT)
+            n_sock.connect((address, port))
+            found = False
+            for c in connections:
+                print(c.getpeername())
+                if c.getpeername()[0] == address:
+                    found = True
+            if not found:
+                connections.append(n_sock)
+
     desc = {'path': '/stuff/'}
     zeroconf = Zeroconf()
     listener = ZListener()
@@ -159,24 +182,6 @@ def main():
     line_height = 40
     finished_lines = []
     mods = [304, 303, 13, 301]
-
-    connections = []
-    opponents = dict()
-    TIMEOUT = 0.001
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    is_server = None
-    if args.hostname is None:
-        is_server = True
-        HOST = ''
-        PORT = 9876
-        sock.bind((HOST, PORT))
-        print(sock.getsockname())
-        sock.listen(8)
-    else:
-        is_sever = False
-        sock.connect((args.hostname, args.port))
-    sock.settimeout(TIMEOUT)
 
     time_limit = 60
     clock = pygame.time.Clock()
@@ -215,14 +220,8 @@ def main():
                                     wrong_string = ''
                                     code_index = 0
                                     reply_str = user + ',' + str(len(finished_lines))
-                                    if is_server:
-                                        for conn in connections:
-                                            conn.sendall(bytearray(reply_str, 'utf-8'))
-                                    else:
-                                        try:
-                                            sock.sendall(bytearray(reply_str, 'utf-8'))
-                                        except socket.error:
-                                            pass
+                                    for conn in connections:
+                                        conn.sendall(bytearray(reply_str, 'utf-8'))
                             else:
                                 if event.key not in mods and len(string) == len(wrong_string):
                                     if code_line[code_index] == ' ':
@@ -242,49 +241,30 @@ def main():
                 sprite.update()
 
             # Networking
-            if is_server:
+            try:
+                conn, addr = sock.accept()
+                conn.settimeout(TIMEOUT)
+                connections.append(conn)
+                print(conn)
+            except socket.timeout:
                 try:
-                    conn, addr = sock.accept()
-                    conn.settimeout(TIMEOUT)
-                    connections.append(conn)
-                    print(conn)
-                except socket.timeout:
-                    try:
-                        new_conns = []
-                        for conn in connections:
-                            msg = conn.recv(256)
-                            if msg is not None and msg != b'':
-                                msg = str(msg).strip('b').strip('\'')
-                                if ',' in msg:
-                                    sender, s_line = msg.split(',')
-                                    opponents[sender] = s_line
-                                else:
-                                    other_lost = True
-                                    game_over_line = msg
-                                print(msg)
-                                new_conns.append(conn)
+                    new_conns = []
+                    for conn in connections:
+                        msg = conn.recv(256)
+                        if msg is not None and msg != b'':
+                            msg = str(msg).strip('b').strip('\'')
+                            if ',' in msg:
+                                sender, s_line = msg.split(',')
+                                opponents[sender] = s_line
                             else:
-                                conn.close()
-                        connections = new_conns
-                    except socket.timeout:
-                        pass
-            else:
-                try:
-                    msg = sock.recv(256)
-                    if msg is not None and msg != b'':
-                        msg = str(msg).strip('b').strip('\'')
-                        if ',' in msg:
-                            sender, s_line = msg.split(',')
-                            opponents[sender] = s_line
+                                other_lost = True
+                                game_over_line = msg
+                            print(msg)
+                            new_conns.append(conn)
                         else:
-                            other_lost = True
-                            game_over_line = msg
-                        print(msg)
-                    else:
-                        sock.close()
+                            conn.close()
+                    connections = new_conns
                 except socket.timeout:
-                    pass
-                except socket.error:
                     pass
 
             # Rendering
