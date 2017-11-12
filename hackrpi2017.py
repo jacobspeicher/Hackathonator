@@ -8,6 +8,8 @@ import pygame
 import random
 import socket
 
+from zeroconf import ServiceBrowser, ServiceInfo, Zeroconf
+
 
 code_lines = [
     'for slice in pizza:',
@@ -88,6 +90,15 @@ class HandSprite(object):
             self.pos = (self.init_pos[0], self.init_pos[1] - 20)
             self.animation_time = 1
 
+class ZListener(object):
+
+    def remove_service(self, zeroconf, tpe, name):
+        print("Service %s removed" % (name,))
+
+    def add_service(self, zeroconf, tpe, name):
+        info = zeroconf.get_service_info(tpe, name)
+        print("Service %s added, service info: %s" % (name, info))
+
 
 white = (255,255,255)
 yellow = (255,255,0)
@@ -102,6 +113,16 @@ def main():
     parser.add_argument('-n', dest='hostname', type=str, help='Hostname of opponent who is running as a server.')
     parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
     args = parser.parse_args()
+
+    desc = {'path': '/~paulsm/'}
+    zeroconf = Zeroconf()
+    listener = ZListener()
+    browser = ServiceBrowser(zeroconf, "_hackathonator._tcp.local.", listener)
+    info = ServiceInfo("_http._tcp.local.",
+                   "Paul's Test Web Site._http._tcp.local.",
+                   socket.inet_aton("127.0.0.1"), 80, 0, 0,
+                   desc, "ash-2.local.")
+    zeroconf.register_service(info)
 
     pygame.init()
     width = 1200
@@ -339,6 +360,7 @@ def main():
 
     pygame.quit()
     sock.close()
+    zeroconf.unregister_service(info)
 
 
 if __name__=='__main__':
