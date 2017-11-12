@@ -106,6 +106,8 @@ class ZListener(object):
     def add_service(self, zeroconf, tpe, name):
         info = zeroconf.get_service_info(tpe, name)
         print("Service %s added, service info: %s" % (name, info))
+        address = socket.inet_ntoa(info.address)
+        print(address)
 
 
 white = (255,255,255)
