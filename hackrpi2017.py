@@ -116,24 +116,25 @@ def main():
                             sprites['l_hand'].move()
                         else:
                             sprites['r_hand'].move()
-                        if event.unicode == code_line[code_index] and len(string) == len(wrong_string):
-                            string += event.unicode
-                            wrong_string += event.unicode
-                            code_index += 1
-                            if code_index == len(code_line):
-                                finished_lines.append((string, line_height))
-                                code_line = code_lines[random.randint(0,len(code_lines)-1)]
-                                string = ''
-                                wrong_string = ''
-                                code_index = 0
-                                line_height += 15
-                        else:
-                            if event.key not in mods and len(string) == len(wrong_string):
-                                if code_line[code_index] == ' ':
-                                    wrong_string += '_'
-                                else:
-                                    wrong_string += code_line[code_index]
+                        if code_index < len(code_line):
+                            if event.unicode == code_line[code_index] and len(string) == len(wrong_string):
+                                string += event.unicode
+                                wrong_string += event.unicode
                                 code_index += 1
+                                if code_index == len(code_line):
+                                    finished_lines.append((code_line, line_height))
+                                    code_line = code_lines[random.randint(0,len(code_lines)-1)]
+                                    string = ''
+                                    wrong_string = ''
+                                    code_index = 0
+                                    line_height += 15
+                            else:
+                                if event.key not in mods and len(string) == len(wrong_string):
+                                    if code_line[code_index] == ' ':
+                                        wrong_string += '_'
+                                    else:
+                                        wrong_string += code_line[code_index]
+                                    code_index += 1
                     else:
                         if(code_index > 0):
                             if len(string) == len(wrong_string):
@@ -150,8 +151,10 @@ def main():
             screen = pygame.draw.rect(win, (34, 40, 49), (50, 30, width - 100, height - 110))
             camera = pygame.draw.circle(win, (0, 0, 0), (width//2, 20), 5)
             head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
+            
+            if code_index != len(code_line):
+                cursor = font.render(code_line[code_index], 1, (0, 0, 0), (255, 255, 255))
 
-            cursor = font.render(code_line[code_index], 1, (0, 0, 0), (255, 255, 255))
             code = font.render(code_line, 1, (255, 255, 255))
             wrong_text = font.render(wrong_string, 1, (255, 255, 255), (255, 0, 0))
             text = font.render(string, 1, (253, 112, 20), (34, 40, 49))
@@ -160,15 +163,15 @@ def main():
             line_numbers = 1
             for line in finished_lines:
                 f_line = font.render(line[0], 1, (253, 112, 20))
-                win.blit(f_line, (75, line[1])) 
-                l_number = font.render(str(line_numbers) + '.', 1, (255, 255, 255))
+                win.blit(f_line, (55 + font.size(str(line_numbers) + '. ')[0], line[1])) 
+                l_number = font.render(str(line_numbers) + '. ', 1, (255, 255, 255))
                 win.blit(l_number, (55, line[1]))
                 line_numbers += 1
 
-            win.blit(code, (75, line_height))
-            win.blit(cursor, (75 + (font.size(string)[0]), line_height))
-            win.blit(wrong_text, (75, line_height))
-            win.blit(text, (75, line_height))
+            win.blit(code, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_height))
+            win.blit(cursor, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0] + (font.size(string)[0]), line_height))
+            win.blit(wrong_text, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_height))
+            win.blit(text, (55 + font.size(str(len(finished_lines) + 1) + '. ')[0], line_height))
             win.blit(l_num, (55, line_height))
             head = pygame.draw.circle(win, (255,255,0), (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
