@@ -143,9 +143,18 @@ def main():
         sock.connect((args.hostname, args.port))
     sock.settimeout(TIMEOUT)
 
+    time_limit = 60
+    clock = pygame.time.Clock()
+    ticks = 0
+    other_lost = False
+
     try:
-        while True:
+        while time_limit > 0:
             # Event handling and game logic
+            ticks += clock.tick()
+            if ticks > 1000:
+                time_limit -= 1
+                ticks = 0
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
@@ -164,6 +173,7 @@ def main():
                                 wrong_string += event.unicode
                                 code_index += 1
                                 if code_index == len(code_line) or event.key == pygame.K_LALT:
+                                    time_limit += 5
                                     finished_lines.append((code_line, len(finished_lines)+1))
                                     code_line = code_lines[random.randint(0,len(code_lines)-1)]
                                     string = ''
@@ -210,8 +220,12 @@ def main():
                             msg = conn.recv(256)
                             if msg is not None and msg != b'':
                                 msg = str(msg).strip('b').strip('\'')
-                                sender, s_line = msg.split(',')
-                                opponents[sender] = s_line
+                                if ',' in msg:
+                                    sender, s_line = msg.split(',')
+                                    opponents[sender] = s_line
+                                else:
+                                    other_lost = True
+                                    game_over_line = msg
                                 print(msg)
                                 new_conns.append(conn)
                             else:
@@ -224,8 +238,12 @@ def main():
                     msg = sock.recv(256)
                     if msg is not None and msg != b'':
                         msg = str(msg).strip('b').strip('\'')
-                        sender, s_line = msg.split(',')
-                        opponents[sender] = s_line
+                        if ',' in msg:
+                            sender, s_line = msg.split(',')
+                            opponents[sender] = s_line
+                        else:
+                            other_lost = True
+                            game_over_line = msg
                         print(msg)
                     else:
                         sock.close()
@@ -248,6 +266,9 @@ def main():
             wrong_text = font.render(wrong_string, 1, white, red)
             text = font.render(string, 1, orange, gray)
             l_num = font.render(str(len(finished_lines) + 1) + '.', 1, white)
+            time = font.render("Time Left: " + str(time_limit), 1, white)
+            if other_lost:
+                other_lost_line = font.render(game_over_line, 1, white, black)
 
             line_h = line_height
             for line in finished_lines[-38:]:
@@ -263,6 +284,10 @@ def main():
             win.blit(wrong_text, (55 + start_line_x, line_h))
             win.blit(text, (55 + start_line_x, line_h))
             win.blit(l_num, (55, line_h))
+            win.blit(time, (width - 200, height - 20))
+
+            if other_lost:
+                win.blit(other_lost_line, ((width // 2) - (font.size(game_over_line)[0] // 2), height // 2))
 
             head = pygame.draw.circle(win, yellow, (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
@@ -276,6 +301,38 @@ def main():
 
             pygame.display.flip()
             my_clock.tick(240)
+
+            if other_lost:
+                break
+
+        if not other_lost:
+            if is_server:
+                for conn in connections:
+                    conn.sendall(bytearray(user + " ran out of time", 'utf-8'))
+            else:
+                try:
+                    sock.sendall(bytearray(user + " ran out of time", 'utf-8'))
+                except socket.error:
+                    pass
+
+        while True and not other_lost:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+            game_over = font.render("Game Over", 1, white, black)
+            win.blit(game_over, (width // 2 - (font.size("Game Over")[0] // 2), height // 2)) 
+            pygame.display.flip()
+            my_clock.tick(240)
+
+        while True and other_lost:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+            win.blit(other_lost_line, (width // 2 - (font.size(game_over_line)[0] // 2), height // 2))
 
     except pygame.error:
         pass
