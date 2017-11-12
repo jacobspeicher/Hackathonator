@@ -187,6 +187,7 @@ def main():
     clock = pygame.time.Clock()
     ticks = 0
     other_lost = False
+    other_score = 0
 
     try:
         while time_limit > 0:
@@ -256,6 +257,7 @@ def main():
                             if ',' in msg:
                                 sender, s_line = msg.split(',')
                                 opponents[sender] = s_line
+                                other_score = int(s_line)
                             else:
                                 other_lost = True
                                 game_over_line = msg
@@ -263,7 +265,6 @@ def main():
                             new_conns.append(conn)
                         else:
                             conn.close()
-                    connections = new_conns
                 except socket.timeout:
                     pass
 
@@ -284,6 +285,14 @@ def main():
             time = font.render("Time Left: " + str(time_limit), 1, white)
             if other_lost:
                 other_lost_line = font.render(game_over_line, 1, white, black)
+                if len(finished_lines) > 0:
+                    your_score = finished_lines[-1][1]
+                else:
+                    your_score = 0
+                if other_score > your_score:
+                    end_msg = font.render("You lost", 1, white, black)
+                else:
+                    end_msg = font.render("You won!", 1, white, black)
 
             line_h = line_height
             for line in finished_lines[-38:]:
@@ -303,6 +312,7 @@ def main():
 
             if other_lost:
                 win.blit(other_lost_line, ((width // 2) - (font.size(game_over_line)[0] // 2), height // 2))
+                win.blit(end_msg, ((width // 2) - (font.size("You won!")[0] // 2), height // 2 + 20))
 
             head = pygame.draw.circle(win, yellow, (width//2, height), 100)
             for sprite_name, sprite in sprites.items():
@@ -336,8 +346,23 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         pygame.quit()
+                        sock.close()
+                        zeroconf.unregister_service(info)
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sock.close()
+                    zeroconf.unregister_service(info)
+            if len(finished_lines) > 0:
+                your_score = finished_lines[-1][1]
+            else:
+                your_score = 0
+            if other_score > your_score:
+                end_msg = font.render("You lost", 1, white, black)
+            else:
+                end_msg = font.render("You won!", 1, white, black)
             game_over = font.render("Game Over", 1, white, black)
             win.blit(game_over, (width // 2 - (font.size("Game Over")[0] // 2), height // 2)) 
+            win.blit(end_msg, (width // 2 - (font.size("You won!")[0] // 2), height // 2 + 20))
             pygame.display.flip()
             my_clock.tick(240)
 
@@ -346,15 +371,22 @@ def main():
             for event in events:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        break
                         pygame.quit()
+                        sock.close()
+                        zeroconf.unregister_service(info)
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sock.close()
+                    zeroconf.unregister_service(info)
             win.blit(other_lost_line, (width // 2 - (font.size(game_over_line)[0] // 2), height // 2))
+            win.blit(end_msg, ((width // 2) - (font.size("You won!")[0] // 2), height // 2 + 20))
+            pygame.display.flip()
+            my_clock.tick(240)
 
     except pygame.error:
         pass
 
-    pygame.quit()
-    sock.close()
-    zeroconf.unregister_service(info)
 
 
 if __name__=='__main__':
