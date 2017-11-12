@@ -245,11 +245,14 @@ def main():
                 for c in connections:
                     print(addr)
                     print(c.getpeername()[0])
-                    if c.getpeername()[0] == addr:
+                    if c.getpeername()[0] == addr[0]:
                         found = True
-                if not found:
-                    print("ADDING CONNECTION SERVER")
-                    connections.append(conn)
+                        print('REMOVING CONNECTION')
+                        connections.remove(c)
+                        break
+                print("ADDING CONNECTION SERVER")
+                connections.append(conn)
+                print(connections)
             except socket.timeout:
                 try:
                     new_conns = []
