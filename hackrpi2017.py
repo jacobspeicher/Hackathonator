@@ -8,6 +8,7 @@ import pygame
 import random
 import socket
 
+import ipgetter
 from zeroconf import ServiceBrowser, ServiceInfo, Zeroconf
 
 
@@ -121,13 +122,18 @@ def main():
     parser.add_argument('-p', dest='port', type=int, help='Port of opponent who is running as a server.', default=9876)
     args = parser.parse_args()
 
+    user = os.environ['USER']
+
+    IP = ipgetter.myip()
+    print(IP)
+    print(type(IP))
     desc = {'path': '/stuff/'}
     zeroconf = Zeroconf()
     listener = ZListener()
     browser = ServiceBrowser(zeroconf, "_hackathonator._tcp.local.", listener)
     info = ServiceInfo("_hackathonator._tcp.local.",
                    user+"._hackathonator._tcp.local.",
-                   socket.inet_aton("127.0.0.1"), 9876, 0, 0,
+                   socket.inet_aton(IP), 9876, 0, 0,
                    desc, "ash-2.local.")
     zeroconf.register_service(info)
 
@@ -136,8 +142,6 @@ def main():
     height = 720
     win = pygame.display.set_mode((width,height))
     pygame.display.set_caption('Hackathonator')
-
-    user = os.environ['USER']
 
     sprites = dict()
     sprites['l_hand'] = HandSprite(yellow, (width//2 -140, height), 20)
@@ -165,6 +169,7 @@ def main():
         HOST = ''
         PORT = 9876
         sock.bind((HOST, PORT))
+        print(sock.getsockname())
         sock.listen(8)
     else:
         is_sever = False
