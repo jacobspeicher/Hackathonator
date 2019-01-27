@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 # hackrpi2017.py by Jacob Speicher and Greg Cowan
-# need to pip install ipgetter and zeroconf
+# need to `pip3 install pygame zeroconf`
 
 import operator
 import os
-import pygame
 import random
 import socket
+import threading
 
-import ipgetter
+import pygame
+import requests
 from zeroconf import ServiceBrowser, ServiceInfo, Zeroconf
 
 
@@ -106,9 +107,9 @@ red = (255,0,0)
 orange = (253, 112, 20)
 gray = (34, 40, 49)
 
-
+mutex = threading.Lock()
 def main():
-    IP = ipgetter.myip()
+    IP = requests.get('http://ip.42.pl/raw').text
     print(IP)
     user = os.environ['USER']
 
@@ -135,6 +136,7 @@ def main():
             print(port)
             if address == IP:
                 return
+            mutex.acquire()
             n_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             n_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             n_sock.connect((address, port))
@@ -146,6 +148,7 @@ def main():
             if not found:
                 print("ADDING CONNECTION ZCONF")
                 connections.append(n_sock)
+            mutex.release()
 
     desc = {'path': '/stuff/'}
     zeroconf = Zeroconf()
@@ -238,6 +241,7 @@ def main():
                 sprite.update()
 
             # Networking
+            mutex.acquire()
             try:
                 conn, addr = sock.accept()
                 conn.settimeout(TIMEOUT)
@@ -275,6 +279,7 @@ def main():
                     connections = new_conns
                 except socket.timeout:
                     pass
+            mutex.release()
 
             # Rendering
             win.fill((0, 0, 0))
